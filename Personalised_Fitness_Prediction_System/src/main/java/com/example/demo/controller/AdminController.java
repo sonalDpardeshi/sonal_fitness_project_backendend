@@ -31,19 +31,17 @@ public class AdminController {
 	
 //	Workout operations by admin
 	
-	@Autowired
-	WorkoutService workoutservice;
 //	Add workouts
 	@PostMapping("/workout/add")
 	public String addWorkouts(@RequestBody Workout workout) {
-		boolean b=workoutservice.add(workout);
+		boolean b=adminservice.addWorkouts(workout);
 		return b?"Workout added":"workout not added";
 	}
 	
 //	view workouts
 	@GetMapping("/workout/view")
 	public List<Workout> viewWorkouts(){
-		List<Workout> list=workoutservice.view();
+		List<Workout> list=adminservice.viewWorkouts();
 		return list;
 	}
 	
@@ -51,34 +49,31 @@ public class AdminController {
 	
 //WorkoutCaloriesRelation related operations by admin
 	
-	@Autowired
-	WorkoutCaloriesRelationService WorkoutCaloriesRelationservice;
-	
 //	add 
 	@PostMapping("/addWorkoutCalories")
 	public String addWorkoutCalories(@RequestBody WorkoutCaloriesRelation workoutcalories) {
-		boolean b=WorkoutCaloriesRelationservice.add(workoutcalories);
+		boolean b=adminservice.add(workoutcalories);
 		return b?"WorkoutCaloriesRelation added success....":"WorkoutClist;aloriesRelation  not added..";
 	}
 	
 //	view
 	@GetMapping("/viewWorkoutCalories")
 	public List<WorkoutCaloriesRelation> viewWorkoutCalories(){
-		List<WorkoutCaloriesRelation> list=WorkoutCaloriesRelationservice.view();
+		List<WorkoutCaloriesRelation> list=adminservice.view();
 		return list;
 	}
 	
 //	update
-	@PutMapping("/updateWorkoutCalories/{id}")
-	public String updateWorkoutCalories(@RequestBody WorkoutCaloriesRelation workoutcalories,@PathVariable("id") Integer record_id) {
-		boolean b=WorkoutCaloriesRelationservice.update(workoutcalories,record_id);
+	@PutMapping("/updateWorkoutCalories/{recordid}")
+	public String updateWorkoutCalories(@RequestBody WorkoutCaloriesRelation workoutcalories,@PathVariable("recordid") Integer recordid) {
+		boolean b=adminservice.update(workoutcalories,recordid);
 		return b?"WorkoutCaloriesRelation updated success...":"WorkoutCaloriesRelation not present...";
 	}
 	
 //	delete 
-	@DeleteMapping("/deleteWorkoutCalories/{id}")
-	public String deleteWorkoutCalories(@PathVariable("id") Integer recordid) {
-		boolean b=WorkoutCaloriesRelationservice.delete(recordid);
+	@DeleteMapping("/deleteWorkoutCalories/{recordid}")
+	public String deleteWorkoutCalories(@PathVariable("recordid") Integer recordid) {
+		boolean b=adminservice.delete(recordid);
 		return b?"record deleted success...":"record not deleted...";
 	}
 	
@@ -88,11 +83,22 @@ public class AdminController {
 	@GetMapping("/viewusers")
 	public List<User> view()
 	{
-		List<User> list=adminservice.view();
+		List<User> list=adminservice.viewUsers();
  		return list;
 	}	
 
 	
-//	workout_intensity_duration_cal_burn add view by admin
+//	Recommending workout plan  to individual user by admin
+	
+//	admin suggesting plan for each user according to its history view by admin
+	@GetMapping("/suggest/{userid}")
+	public String recommendPlan(@PathVariable("userid") Integer userid) {
+		
+		boolean b=adminservice.suggest(userid);
+		if(b) {return "file found for that "+userid;}
+		else {return "file not found for that "+userid;}
+//		return "plan suggested done";
+	} 
+	
 	
 }

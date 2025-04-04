@@ -8,9 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.io.*;
 import java.util.*;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import com.example.demo.model.*;
 import com.example.demo.service.*;
@@ -26,7 +25,7 @@ public class UserController {
 //	User register
 	@PostMapping("/register")
 	public String userRegister(@RequestBody User user) {
-		System.out.println("controller: "+user.getEmail());
+//		System.out.println("controller: "+user.getEmail());
 		boolean b=userservice.add(user);
 		if(b) {
 		return "User registration success....";
@@ -49,22 +48,57 @@ public class UserController {
 		}
 	}
 	
+//	user fill workout form
+	@PostMapping("/workoutdetails")
+	public String workoutDetails(@RequestBody UserWorkoutData userworkout) throws IOException {
+		boolean b=userservice.fetch(userworkout);
+		if(b){
+		String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\UserHistory\\user_"+userworkout.getUserid()+".csv";
+				
+		File f=new File(filename);
+		if(!f.exists()) {f.createNewFile();}
+
+//		adding csv file name in db
+		boolean b1=userservice.addPath(userworkout.getUserid(),f);
+		System.out.println(b1);
+		System.out.println("File path in controller: "+f.getAbsolutePath());
+		FileWriter fw=new FileWriter(f,true);
+//		System.out.println("Controller: "+userworkout.getCalories_burn());
+		
+	fw.write(userworkout.getUserid()+","+userworkout.getWorkout_type_id()+","+userworkout.getIntensityid()+","+userworkout.getDuration()+","+userworkout.getCalories_burn()+"\n");
+				fw.close();
+	return "workout details added to csv file..";
+		}
+		else {
+			return "user with this userid is not registered ";
+		}
+	}
 
 	
-//	@GetMapping("/view")
-//	public List<Map<String,Object>> view(){
-//		List<User> list=userservice.view();
-//		return list.stream().map(u->{
-//			Map<String,Object> map=new HashMap<>();
-//			map.put("name",u.getName());
-//			map.put("email", u.getEmail());
-//			map.put("height", u.getHeight());
-//			map.put("weight", u.getWeight());
-//			return map;
-//		}).collect(Collectors.toList());
-//		
-//		list.forEach(e->System.out.println(e.getUserid()+" "+e.getEmail()+" "+e.getPassword()));
-//		return list;
-//		
-//	}
+//	See history of individual user(means see/read own csv file)
+	@GetMapping("/read/{userid}")
+	public String readCsv(@RequestBody UserWorkoutData userworkout,@PathVariable Integer userid) throws IOException {
+		
+		String s=userservice.readHistory(userid);
+		
+		return s;		
+	}
+		
+//	calculate total calories burn uptill now
+	@GetMapping("/getcaloriesuptillnow/{userid}")
+	public double getCaloriesBurnUptillNow(@PathVariable("userid") Integer userid) {
+		
+		double d= userservice.totalcount(userid);
+//		System.out.println("Controller: "+d);
+		return d;
+	}
+	
+	
+//Remaining operations of user
+//	view workouts
+	
+//	profile update and view
+	
+//	
+
 }
