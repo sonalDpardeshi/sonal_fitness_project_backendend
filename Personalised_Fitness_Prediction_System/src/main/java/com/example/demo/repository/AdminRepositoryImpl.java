@@ -1,21 +1,16 @@
 package com.example.demo.repository;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import com.example.demo.model.User;
-import com.example.demo.model.Workout;
-import com.example.demo.model.WorkoutCaloriesRelation;
+import com.example.demo.model.*;
 
 @Repository("adminrepo")
 public class AdminRepositoryImpl implements AdminRepository {
@@ -43,41 +38,10 @@ public class AdminRepositoryImpl implements AdminRepository {
 				return user;
 			}
 		});
-		
 		return list;
 	}
 
-	@Override
-	public boolean suggest(Integer userid) {
 	
-	String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\UserHistory\\user_"+userid+".csv";
-	
-//	To store workoutid,intensityid,duration 
-	List<Integer> workoutids=new ArrayList<>();
-	List<Integer> intensityids=new ArrayList<>();
-	List<Integer> durations=new ArrayList<>();
-	
-	
-		File f=new File(filename);
-		if(!f.exists()) {return false;}
-		String str="";
-		StringBuilder sb=new StringBuilder();
-		try(BufferedReader br=new BufferedReader(new FileReader(f))){
-			while((str=br.readLine())!=null) {
-//				 sb.append(str).append("\n");
-				String data[]=str.split(",");
-				 workoutids.add(Integer.parseInt(data[1]));
-				 intensityids.add(Integer.parseInt(data[2]));
-				 durations.add(Integer.parseInt(data[3]));	
-//				 remaining complete karne
-			}
-		}
-		catch(Exception e) {
-			
-		}
-		System.out.println(sb.toString());
-		return true;
-	}
 
 //	Workouts are added by admin
 	@Override
@@ -90,7 +54,6 @@ public class AdminRepositoryImpl implements AdminRepository {
 			}
 		});
 		return value>0?true:false;
-		
 	}
 
 	@Override
@@ -170,5 +133,101 @@ int value=template.update("delete from WorkoutCaloriesRelation where recordid=?"
 	}
 	
 	
+//	recommending plan to user by admin as per userid
+	@Override
+	public Map<String,LinkedHashSet<String>> suggest(Integer userid) {
+	String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\UserHistory\\user_"+userid+".csv";
+
+//	To store workoutid,intensityid,duration 
+	List<Integer> workoutids=new ArrayList<>();
+	List<Integer> intensityids=new ArrayList<>();
+	List<Integer> durations=new ArrayList<>();
+	
+	
+		File f=new File(filename);
+		if(!f.exists()) {return null;}
+		String str="";
+		StringBuilder sb=new StringBuilder();
+		try(BufferedReader br=new BufferedReader(new FileReader(f))){
+			while((str=br.readLine())!=null) {
+				String data[]=str.split(",");
+				 workoutids.add(Integer.parseInt(data[1]));
+				 intensityids.add(Integer.parseInt(data[2]));
+				 durations.add(Integer.parseInt(data[3]));
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+//		Converting list into arrays
+		int wo[]=new int[workoutids.size()];
+		for(int i=0;i<workoutids.size();i++) {
+			wo[i]=workoutids.get(i);
+		}
+		
+		int in[]=new int[intensityids.size()];
+		for(int i=0;i<intensityids.size();i++) {
+			in[i]=intensityids.get(i);
+		}
+		int du[]=new int[durations.size()];
+		for(int i=0;i<durations.size();i++) {
+			du[i]=durations.get(i);
+		}
+		
+//		Logic for calculating average duration
+		int avgduration=0,sum=0;
+		for(int i=0;i<du.length;i++) {
+			sum+=du[i];	
+		}
+		avgduration=sum/du.length;
+
+//		Logic for intensities
+		LinkedHashSet<String> hsin=new LinkedHashSet<>();
+		for(int i=0;i<in.length;i++) {
+			int p=in[i];
+			List list=template.query("select intensity_type from intensity where intensityid=?", new PreparedStatementSetter() {
+				@Override
+				public void setValues(PreparedStatement ps) throws SQLException {
+					ps.setInt(1, p);
+				}
+			}, new RowMapper() {
+				@Override
+				public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+					hsin.add(rs.getString(1));
+					return hsin;
+				}
+			});	
+		}
+		
+//		Logic for workouts
+		LinkedHashSet<String> hswo=new LinkedHashSet<>();
+		for(int i=0;i<wo.length;i++) {
+			int p=wo[i];
+			List list=template.query("select workout_type from workout_type where workout_type_id=?", new PreparedStatementSetter() {
+				@Override
+				public void setValues(PreparedStatement ps) throws SQLException {
+					ps.setInt(1, p);
+				}
+			}, new RowMapper() {
+				@Override
+				public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+					hswo.add(rs.getString(1));
+					return hswo;
+				}
+			});	
+		}
+		
+//		adding workouts, intensities,averageduration in map
+		Map<String,LinkedHashSet<String>> plan=new LinkedHashMap<String,LinkedHashSet<String>>();
+		plan.put("workouts", hswo);
+		plan.put("intensties", hsin);
+		
+		LinkedHashSet<String> lhs=new LinkedHashSet<>();
+		lhs.add(avgduration+"");
+		plan.put("duration for day",lhs);
+		
+		return plan;
+	}
 
 }

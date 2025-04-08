@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import com.example.demo.service.*;
 
 @RestController
 @RequestMapping("/admin")
+@CrossOrigin("http://localhost:5173")
 public class AdminController {
 	
 	@Autowired
@@ -22,9 +24,9 @@ public class AdminController {
 	
 	
 //	Admin login
-	@PostMapping("/login/{username}/{password}")
-	public String adminLogin(@PathVariable("username") String username,@PathVariable("password") String password) {
-	return adminservice.validateAdmin(username,password)?"Admin login success....":"Please check username or password";
+	@PostMapping("/login")
+	public String adminLogin(@RequestBody Admin admin) {
+	return adminservice.validateAdmin(admin.getUsername(),admin.getPassword())?"Admin login success....":"Please check username or password";
 	}
 	
 //	Admin operations
@@ -92,12 +94,10 @@ public class AdminController {
 	
 //	admin suggesting plan for each user according to its history view by admin
 	@GetMapping("/suggest/{userid}")
-	public String recommendPlan(@PathVariable("userid") Integer userid) {
-		
-		boolean b=adminservice.suggest(userid);
-		if(b) {return "file found for that "+userid;}
-		else {return "file not found for that "+userid;}
-//		return "plan suggested done";
+	public Map<String, LinkedHashSet<String>> recommendPlan(@PathVariable("userid") Integer userid) {
+		 Map<String,LinkedHashSet<String>> map=adminservice.suggest(userid);
+		if(map!=null) {return map;}
+		else {return null;}
 	} 
 	
 	

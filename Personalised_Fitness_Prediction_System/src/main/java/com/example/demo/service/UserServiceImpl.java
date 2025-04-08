@@ -44,4 +44,19 @@ public class UserServiceImpl implements UserService {
 		return userrepo.addpath(userid,f);
 	}
 
+	@Override
+	public List<Workout> viewWorkouts() {
+		return userrepo.viewWorkouts();
+	}
+
+	@Override
+	public boolean updateProfile(User user,int userid) {
+		return userrepo.updateProfile(user,userid);
+	}
+
+	@Override
+	public List<User> viewProfile(Integer userid) {
+		return userrepo.viewProfile(userid);
+	}
+
 }

@@ -18,6 +18,12 @@ public interface UserRepository {
 
 	public boolean addpath(int userid, File f);
 
+	public List<Workout> viewWorkouts();
+
+	public boolean updateProfile(User user,int userid);
+
+	public List<User> viewProfile(Integer userid);
+
 	
 
 

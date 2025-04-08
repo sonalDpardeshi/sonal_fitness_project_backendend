@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import com.example.demo.model.User;
 import com.example.demo.model.UserWorkoutData;
+import com.example.demo.model.Workout;
 
 @Repository("userrepo")
 public class UserRepositoryImpl implements UserRepository{
@@ -196,6 +197,58 @@ String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personal
 			}
 		}	
 		return v>0?true:false;
+	}
+
+	@Override
+	public List<Workout> viewWorkouts() {
+		List<Workout> list=template.query("select * from workout_type", new RowMapper() {
+
+			@Override
+			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+				Workout w=new Workout();
+				w.setWorkout_type_name(rs.getString(2));
+				return w;
+			}
+		});
+		return list;
+	}
+
+	@Override
+	public boolean updateProfile(User user,int userid) {
+		int value=template.update("update user set name=?,email=?,password=?,height=?,weight=? where userid=?", new PreparedStatementSetter() {
+			
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+				ps.setString(1, user.getName());
+				ps.setString(2, user.getEmail());
+				ps.setString(3, user.getPassword());
+				ps.setDouble(4, user.getHeight());
+				ps.setDouble(5, user.getWeight());
+				ps.setInt(6, userid);
+			}
+		});
+		
+		return value>0?true:false;
+	}
+
+
+	@Override
+	public List<User> viewProfile(Integer userid) {
+		List<User> list=template.query("select * from user where userid=?",new Object[] {userid},new RowMapper() {
+
+			@Override
+			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+				User u=new User();
+				u.setUserid(rs.getInt(1));
+				u.setName(rs.getString(2));
+				u.setEmail(rs.getString(3));
+				u.setPassword(rs.getString(4));
+				u.setHeight(rs.getDouble(5));
+				u.setWeight(rs.getDouble(6));
+				return u;
+			}
+		});
+		return list;
 	}
 
 

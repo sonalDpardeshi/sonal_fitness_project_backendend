@@ -60,7 +60,7 @@ public class UserController {
 
 //		adding csv file name in db
 		boolean b1=userservice.addPath(userworkout.getUserid(),f);
-		System.out.println(b1);
+//		System.out.println(b1);
 		System.out.println("File path in controller: "+f.getAbsolutePath());
 		FileWriter fw=new FileWriter(f,true);
 //		System.out.println("Controller: "+userworkout.getCalories_burn());
@@ -96,9 +96,30 @@ public class UserController {
 	
 //Remaining operations of user
 //	view workouts
+	@GetMapping("/workout/view")
+	public List<Workout> viewWorkouts(){
+		List<Workout> list=userservice.viewWorkouts();
+		return list;
+	}
 	
-//	profile update and view
+// update profile  
+	@PostMapping("/updateprofile/{userid}")
+	public String updateProfile(@RequestBody User user,@PathVariable("userid") Integer userid) {
+		boolean b=userservice.updateProfile(user,userid);
+		if(b) {
+		return "profile updated success...";
+		}
+		else {
+			return "profile not updated success...";
+		}
+	}
 	
-//	
+	
+//	view profile  (icon var click and get id and see self profile)
+	@GetMapping("/viewprofile")
+	public List<User> viewProfile(@RequestParam("userid") Integer userid){
+		List<User> list=userservice.viewProfile(userid);
+		return list;
+	}
 
 }

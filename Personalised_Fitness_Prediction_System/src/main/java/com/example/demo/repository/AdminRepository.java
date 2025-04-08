@@ -1,18 +1,13 @@
 package com.example.demo.repository;
 
-import java.util.List;
-
-import com.example.demo.model.User;
-import com.example.demo.model.Workout;
-import com.example.demo.model.WorkoutCaloriesRelation;
+import java.util.*;
+import com.example.demo.model.*;
 
 public interface AdminRepository {
 
 	public boolean validateAdmin(String username, String password);
 
 	public List<User> viewUsers();
-
-	public boolean suggest(Integer userid);
 
 	public boolean addWorkouts(Workout workout);
 
@@ -25,5 +20,7 @@ public interface AdminRepository {
 	public boolean update(WorkoutCaloriesRelation workoutcalories, Integer recordid);
 
 	public boolean delete(Integer recordid);
+
+	public Map<String,LinkedHashSet<String>> suggest(Integer userid);
 
 }
