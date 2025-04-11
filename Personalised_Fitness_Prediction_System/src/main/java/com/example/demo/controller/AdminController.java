@@ -19,7 +19,7 @@ public class AdminController {
 	
 	@Autowired
 	AdminService adminservice;
-	
+//Hello	
 	
 //	Admin login
 	@PostMapping("/login/{username}/{password}")
