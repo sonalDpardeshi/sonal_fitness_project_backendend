@@ -32,6 +32,14 @@ public class WorkoutCaloriesRelationServieImpl implements WorkoutCaloriesRelatio
 	public boolean delete(Integer recordid) {
 		return WorkoutCaloriesRelationrepo.delete(recordid);
 	}
+
+	@Override
+	public WorkoutCaloriesRelation getworkoutcalbyrid(Integer recordid) {
+		// TODO Auto-generated method stub
+		return WorkoutCaloriesRelationrepo.getworkoutcalbyrid(recordid);
+	}
+
+	
 	
 
 }

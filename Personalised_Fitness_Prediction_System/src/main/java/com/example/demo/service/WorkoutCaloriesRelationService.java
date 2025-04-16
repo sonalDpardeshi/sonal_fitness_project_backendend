@@ -13,4 +13,5 @@ public interface WorkoutCaloriesRelationService {
 
 	public boolean delete(Integer recordid);
 
+	public WorkoutCaloriesRelation getworkoutcalbyrid(Integer recordid);
 }

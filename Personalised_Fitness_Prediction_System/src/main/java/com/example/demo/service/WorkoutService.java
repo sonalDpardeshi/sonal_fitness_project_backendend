@@ -9,5 +9,5 @@ public interface WorkoutService {
 	public boolean add(Workout workout);
 
 	public List<Workout> view();
-
+   
 }

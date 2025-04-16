@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
@@ -65,27 +66,48 @@ public class UserRepositoryImpl implements UserRepository{
 	}
 
 //	add workouts in csv
+	@Override
+	public boolean updateUser(int id,User user) {
+	    int value = template.update(
+	        "UPDATE user SET name = ?,email=?, password = ?, height = ?, weight = ?   WHERE userid = ?",
+	        new PreparedStatementSetter() {
+	            @Override
+	            public void setValues(PreparedStatement ps) throws SQLException {
+	                ps.setString(1, user.getName());
+	                ps.setString(2, user.getEmail());
+	                ps.setString(3, user.getPassword());
+	                ps.setDouble(4, user.getHeight());
+	                ps.setDouble(5, user.getWeight()); 
+	                ps.setInt(6, id);// email as identifier
+	            }
+	        });
+
+	    return value > 0;
+	}
+
 	
 
 	@Override
 	public boolean fetch(UserWorkoutData userworkout) {
-		
+	//	System.out.println("repo"+userworkout.getIntensityid());
 		List value=template.query("select userid from user where userid=?", new Object[] {userworkout.getUserid()}, new RowMapper() {
 
 			@Override
 			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
 				User u=new User();
 				u.setUserid(rs.getInt(1));
+				//System.out.println(u.getUserid());
 				return u;
 			}
 		});
 		
 		if(value.size()==0) {
-			System.out.println();
+			System.out.println("Record is not present");
 			return false;
 		}
 		int userId=userworkout.getUserid();
 		int duration=userworkout.getDuration();
+
 		double calories=0;
 		
 		List<UserWorkoutData> list=template.query("select * from workoutcaloriesrelation where workout_type_id=? and intensityid=?", new PreparedStatementSetter() {
@@ -93,7 +115,9 @@ public class UserRepositoryImpl implements UserRepository{
 			@Override
 			public void setValues(PreparedStatement ps) throws SQLException {
 			ps.setInt(1, userworkout.getWorkout_type_id());
+		//	System.out.println("woroutid "+userworkout.getWorkout_type_id());
 			ps.setInt(2, userworkout.getIntensityid());
+		//	System.out.println("intensityid "+ userworkout.getIntensityid());
 			}
 		}, new RowMapper() {
 
@@ -105,18 +129,21 @@ public class UserRepositoryImpl implements UserRepository{
 			uwdata.setIntensityid(rs.getInt(3));
 			uwdata.setDuration(duration);
 			
+			//System.out.println(uwdata.getUserid()+"\t"+uwdata.getWorkout_type_id()+"\t"+uwdata.getIntensityid()+"\t"+uwdata.getDuration());
 			int d=rs.getInt(4);
 			double cal=rs.getDouble(5);
+			//System.out.println(d+"\t"+cal);
 			
 //			predicting calories logic
 			uwdata.setCalories_burn((duration*cal)/d);
+			
 			return uwdata;
 			}
 		});
 		list.forEach(e->
 		userworkout.setCalories_burn(e.getCalories_burn()));
 		
-		
+		//System.out.println(list.get(0).getCalories_burn());
 				return list.size()>0?true:false;
 	}
 
@@ -124,7 +151,7 @@ public class UserRepositoryImpl implements UserRepository{
 //	read user workout history
 	@Override
 	public String readHistory(int userid) {
-		String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\UserHistory\\user_"+userid+".csv";
+		String filename="C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_"+userid+".csv";
 		
 		File f=new File(filename);
 		if(!f.exists()) {
@@ -146,7 +173,7 @@ public class UserRepositoryImpl implements UserRepository{
 
 	@Override
 	public double totalCount(int userid) {
-String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\UserHistory\\user_"+userid+".csv";
+    String filename="C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_"+userid+".csv";
 		
 		File f=new File(filename);
 		if(!f.exists()) {
@@ -198,5 +225,11 @@ String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personal
 		return v>0?true:false;
 	}
 
+@Override
+public User getUserByEId(String email) {
+	String qry="select * from User where email=?";
+	return template.queryForObject(qry,new BeanPropertyRowMapper<>(User.class),email);
+}
 
+   
 }

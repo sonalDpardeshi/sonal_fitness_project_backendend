@@ -11,6 +11,8 @@ public interface AdminService {
 	boolean validateAdmin(String username, String password);
 
 	public List<User> viewUsers();
+	
+	public boolean deleteUser(Integer userid);
 
 	public boolean suggest(Integer userid);
 

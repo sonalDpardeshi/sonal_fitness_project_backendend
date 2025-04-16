@@ -1,9 +1,11 @@
 package com.example.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +18,7 @@ import com.example.demo.service.*;
 
 @RestController
 @RequestMapping("/user")
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 //	service object
 	@Autowired
@@ -48,12 +51,33 @@ public class UserController {
 		}
 	}
 	
+	//User update profile here
+		@PutMapping("/update/{userid}")
+		public String userUpdate(@PathVariable int userid,@RequestBody User user) {
+			
+			boolean b=userservice.updateUser(userid,user);
+			return b?"Profile Update Successfully":"Profile not updated";
+		}
+
+		  @GetMapping("/getuser/{email}")
+		    public User getUserByEmail(@PathVariable String email) {
+		        User user = userservice.getUserByEId(email);
+		        if (user != null) {
+		            return user; // returns name, email, etc.
+		        } else {
+		            return null;
+		        }
+		    }
+		
+		
+	
 //	user fill workout form
 	@PostMapping("/workoutdetails")
 	public String workoutDetails(@RequestBody UserWorkoutData userworkout) throws IOException {
 		boolean b=userservice.fetch(userworkout);
-		if(b){
-		String filename="D:\\Fitness_Project\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\UserHistory\\user_"+userworkout.getUserid()+".csv";
+		//System.out.println("User is not getting"+b);
+   if(b){
+		String filename="C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_"+userworkout.getUserid()+".csv";
 				
 		File f=new File(filename);
 		if(!f.exists()) {f.createNewFile();}
@@ -68,7 +92,7 @@ public class UserController {
 	fw.write(userworkout.getUserid()+","+userworkout.getWorkout_type_id()+","+userworkout.getIntensityid()+","+userworkout.getDuration()+","+userworkout.getCalories_burn()+"\n");
 				fw.close();
 	return "workout details added to csv file..";
-		}
+	   }
 		else {
 			return "user with this userid is not registered ";
 		}

@@ -6,11 +6,13 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.model.User;
 import com.example.demo.model.WorkoutCaloriesRelation;
 
 @Repository("WorkoutCaloriesRelationrepo")
@@ -78,6 +80,12 @@ public class WorkoutCaloriesRelationRepositoryImpl implements WorkoutCaloriesRel
 			}
 		});
 		return value>0?true:false;
+	}
+
+	@Override
+	public WorkoutCaloriesRelation getworkoutcalbyrid(Integer recordid) {
+		String qry="select * from workoutcaloriesrelation where recordid=?";
+		return template.queryForObject(qry,new BeanPropertyRowMapper<>(WorkoutCaloriesRelation.class),recordid);
 	}
 
 }

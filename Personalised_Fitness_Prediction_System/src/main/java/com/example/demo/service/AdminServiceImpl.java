@@ -47,9 +47,15 @@ public class AdminServiceImpl implements AdminService {
 	public boolean update(WorkoutCaloriesRelation workoutcalories, Integer recordid) {
 		return adminrepo.update(workoutcalories,recordid);
 	}
+	//delete WorkoutCalariesrelation
 	@Override
 	public boolean delete(Integer recordid) {
 		return adminrepo.delete(recordid);
+	}
+	@Override
+	public boolean deleteUser(Integer userid) {
+		// TODO Auto-generated method stub
+		return adminrepo.deleteUser(userid);
 	}
 
 }
