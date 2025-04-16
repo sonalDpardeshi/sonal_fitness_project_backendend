@@ -24,6 +24,12 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public boolean updateUser(int id,User user) {
+		// TODO Auto-generated method stub
+		return userrepo.updateUser(id,user);
+	}
+
+	@Override
 	public boolean fetch(UserWorkoutData userworkout) {
 		return userrepo.fetch(userworkout);
 	}
@@ -43,5 +49,10 @@ public class UserServiceImpl implements UserService {
 		// TODO Auto-generated method stub
 		return userrepo.addpath(userid,f);
 	}
+
+	@Override
+	public User getUserByEId(String email) {
+        return userrepo.getUserByEId(email);
+    }
 
 }

@@ -1,0 +1,8 @@
+Personalized Fitness Plan for User 5
+
+Based on your recent activity, here is your plan:
+- Recommended Workout Type ID: 21
+- Suggested Intensity Level ID: 1
+- Average Duration: 25 minutes
+
+👉 Keep up the great work! Try to be consistent with this plan for the next 2 weeks.

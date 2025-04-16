@@ -8,6 +8,7 @@ public class WorkoutCaloriesRelation {
 	private int workout_type_id;
 	private int intensityid;
 	private int duration;
-	private double calories_burn;	
+	private double calories_burn;
+	
 
 }

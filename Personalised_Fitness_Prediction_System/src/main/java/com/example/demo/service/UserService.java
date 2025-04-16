@@ -20,6 +20,8 @@ public double totalcount(int userid);
 
 public boolean addPath(int userid, File f);
 
+public boolean updateUser(int id,User user);
 
+public User getUserByEId(String email);
 
 }

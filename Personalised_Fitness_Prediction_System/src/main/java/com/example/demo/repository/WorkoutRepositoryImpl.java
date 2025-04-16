@@ -25,7 +25,7 @@ public class WorkoutRepositoryImpl implements WorkoutRepository {
 			
 			@Override
 			public void setValues(PreparedStatement ps) throws SQLException {
-			ps.setString(1, workout.getWorkout_type_name());
+			ps.setString(1,workout.getWorkout_type_name());
 			}
 		});
 		return value>0?true:false;

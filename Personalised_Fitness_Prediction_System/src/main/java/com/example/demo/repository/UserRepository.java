@@ -18,7 +18,7 @@ public interface UserRepository {
 
 	public boolean addpath(int userid, File f);
 
-	
+	public boolean updateUser(int id,User user);
 
-
+	   public User getUserByEId(String email);
 }
