@@ -5,9 +5,9 @@ import lombok.Data;
 public class WorkoutCaloriesRelation {
 	
 	private int recordid;
-	private int workout_type_id;
-	private int intensityid;
+	private String workout_type_id;
+	private String intensityid;
 	private int duration;
-	private double calories_burn;	
-
+	private double calories_burn;
+	
 }

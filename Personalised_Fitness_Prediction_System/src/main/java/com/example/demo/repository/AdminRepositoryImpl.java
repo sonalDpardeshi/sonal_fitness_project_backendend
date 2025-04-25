@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
@@ -41,6 +43,21 @@ public class AdminRepositoryImpl implements AdminRepository {
 		return list;
 	}
 
+//	View intensities
+	@Override
+	public List<Intensity> viewIntensities() {
+		List<Intensity> list=template.query("select *from intensity", new RowMapper() {
+
+			@Override
+			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+			Intensity i=new Intensity();
+			i.setIntensityid(rs.getInt(1));
+			i.setIntensity_type(rs.getString(2));
+				return i;
+			}
+		});
+		return list;
+	}
 	
 
 //	Workouts are added by admin
@@ -73,12 +90,13 @@ public class AdminRepositoryImpl implements AdminRepository {
 
 	@Override
 	public boolean add(WorkoutCaloriesRelation workoutcalories) {
+		
 		int value=template.update("insert into WorkoutCaloriesRelation values('0',?,?,?,?)", new PreparedStatementSetter() {
 			
 			@Override
 			public void setValues(PreparedStatement ps) throws SQLException {
-				ps.setInt(1, workoutcalories.getWorkout_type_id());
-				ps.setInt(2, workoutcalories.getIntensityid());
+				ps.setInt(1,Integer.parseInt( workoutcalories.getWorkout_type_id()));
+				ps.setInt(2, Integer.parseInt(workoutcalories.getIntensityid()));
 				ps.setInt(3, workoutcalories.getDuration());
 				ps.setDouble(4, workoutcalories.getCalories_burn());
 			}
@@ -88,41 +106,82 @@ public class AdminRepositoryImpl implements AdminRepository {
 
 	@Override
 	public List<WorkoutCaloriesRelation> view() {
-		List<WorkoutCaloriesRelation> list=template.query("select * from WorkoutCaloriesRelation", new RowMapper() {
-
+		RowMapper<WorkoutCaloriesRelation> row=new RowMapper<WorkoutCaloriesRelation>() {
+			
 			@Override
-			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-				WorkoutCaloriesRelation workoutcalories=new WorkoutCaloriesRelation();
-				workoutcalories.setWorkout_type_id(rs.getInt(2));
-				workoutcalories.setIntensityid(rs.getInt(3));
-				workoutcalories.setDuration(rs.getInt(4));
-				workoutcalories.setCalories_burn(rs.getDouble(5));
-				return workoutcalories;
+			public WorkoutCaloriesRelation mapRow(ResultSet rs, int rowNum) throws SQLException {
+				WorkoutCaloriesRelation wcr=new WorkoutCaloriesRelation();
+				wcr.setRecordid(rs.getInt(3));
+				wcr.setWorkout_type_id(rs.getString(9));
+				wcr.setIntensityid(rs.getString(2));
+				wcr.setDuration(rs.getInt(6));
+				wcr.setCalories_burn(rs.getDouble(7));
+				return wcr;
 			}
-		});
+		};
+		List<WorkoutCaloriesRelation> list=template.query("select * from intensity i inner join WorkoutCaloriesRelation wcr on i.intensityid=wcr.intensityid inner join workout_type w on w.workout_type_id=wcr.workout_type_id", row);
 		return list;
 	}
 
+//	only updates duration and calories burn not workout_id and intensity_id
 	@Override
 	public boolean update(WorkoutCaloriesRelation workoutcalories, Integer recordid) {
-int value=template.update("update WorkoutCaloriesRelation set workout_type_id=?,intensityid=?,duration=?,calories_burn=? where recordid=?", new PreparedStatementSetter() {
+		int value=template.update("update WorkoutCaloriesRelation set workout_type_id=?,intensityid=? ,duration=?,calories_burn=? where recordid=?", new PreparedStatementSetter() {
 			
 			@Override
 			public void setValues(PreparedStatement ps) throws SQLException {
-				ps.setInt(1, workoutcalories.getWorkout_type_id());
-				ps.setInt(2, workoutcalories.getIntensityid());
+				
+				//for getting workout_type_id from workout_type_name
+				int workout_type_id=template.queryForObject("select workout_type_id from workout_type where workout_type=?", new Object[] {workoutcalories.getWorkout_type_id()}, Integer.class);
+//				System.out.println("repo: "+workout_type_id);
+				ps.setString(1,String.valueOf(workout_type_id));//Integer to string conversion
+				
+				//for intensity
+				int intensityid=template.queryForObject("select intensityid from intensity where intensity_type=?", new Object[] {workoutcalories.getIntensityid()}, Integer.class);
+//				System.out.println("repo: "+workout_type_id);
+				ps.setString(2,String.valueOf(intensityid));//Integer to string conversion
+				
 				ps.setInt(3, workoutcalories.getDuration());
 				ps.setDouble(4, workoutcalories.getCalories_burn());
-				ps.setInt(5,recordid);
-				
+				ps.setInt(5,recordid);	
 			}
 		});
 		return value>0?true:false;
 	}
 
+//	search
+	@Override
+	public List<WorkoutCaloriesRelation> search(String pattern) {
+		List<WorkoutCaloriesRelation> list=template.query("select workout_type,intensity_type,duration,calories_burn from intensity i inner join WorkoutCaloriesRelation wcr on i.intensityid=wcr.intensityid inner join workout_type w on w.workout_type_id=wcr.workout_type_id where workout_type like ? or intensity_type like ? or duration like ? or calories_burn like ?", new PreparedStatementSetter() {
+					
+					@Override
+					public void setValues(PreparedStatement ps) throws SQLException {
+						ps.setString(1, "%"+pattern+"%");
+						ps.setString(2, "%"+pattern+"%");
+						ps.setString(3, "%"+pattern+"%");
+						ps.setString(4, "%"+pattern+"%");
+					}
+				}, new RowMapper() {
+
+					@Override
+					public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+						WorkoutCaloriesRelation wcr=new WorkoutCaloriesRelation();
+						wcr.setWorkout_type_id(rs.getString(1));
+						wcr.setIntensityid(rs.getString(2));
+						wcr.setDuration(rs.getInt(3));
+						wcr.setCalories_burn(rs.getDouble(4));
+						return wcr;
+					}
+				});
+				return list.isEmpty()?null:list;
+	}
+	
+	
+	
+//	Not required 
 	@Override
 	public boolean delete(Integer recordid) {
-int value=template.update("delete from WorkoutCaloriesRelation where recordid=?",new PreparedStatementSetter() {
+		int value=template.update("delete from WorkoutCaloriesRelation where recordid=?",new PreparedStatementSetter() {
 			
 			@Override
 			public void setValues(PreparedStatement ps) throws SQLException {
@@ -183,7 +242,7 @@ int value=template.update("delete from WorkoutCaloriesRelation where recordid=?"
 		avgduration=sum/du.length;
 
 //		Logic for intensities
-		LinkedHashSet<String> hsin=new LinkedHashSet<>();
+		LinkedHashSet<String> lhsin=new LinkedHashSet<>();
 		for(int i=0;i<in.length;i++) {
 			int p=in[i];
 			List list=template.query("select intensity_type from intensity where intensityid=?", new PreparedStatementSetter() {
@@ -194,14 +253,14 @@ int value=template.update("delete from WorkoutCaloriesRelation where recordid=?"
 			}, new RowMapper() {
 				@Override
 				public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-					hsin.add(rs.getString(1));
-					return hsin;
+					lhsin.add(rs.getString(1));
+					return lhsin;
 				}
 			});	
 		}
 		
 //		Logic for workouts
-		LinkedHashSet<String> hswo=new LinkedHashSet<>();
+		LinkedHashSet<String> lhswo=new LinkedHashSet<>();
 		for(int i=0;i<wo.length;i++) {
 			int p=wo[i];
 			List list=template.query("select workout_type from workout_type where workout_type_id=?", new PreparedStatementSetter() {
@@ -212,22 +271,94 @@ int value=template.update("delete from WorkoutCaloriesRelation where recordid=?"
 			}, new RowMapper() {
 				@Override
 				public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-					hswo.add(rs.getString(1));
-					return hswo;
+					lhswo.add(rs.getString(1));
+					return lhswo;
 				}
 			});	
 		}
 		
 //		adding workouts, intensities,averageduration in map
-		Map<String,LinkedHashSet<String>> plan=new LinkedHashMap<String,LinkedHashSet<String>>();
-		plan.put("workouts", hswo);
-		plan.put("intensties", hsin);
+		Map<String, LinkedHashSet<String>> plan=new LinkedHashMap<String,LinkedHashSet<String>>();
+		if(!lhswo.isEmpty()) {plan.put("workouts", lhswo);}
+		else{lhswo.add("no recommended any workouts");}
+		
+		lhswo.forEach(e->System.out.println("repo: "+e+" "));
+		
+		if(!lhsin.isEmpty()) {plan.put("intensties", lhsin);}
+		else{lhsin.add("no recommended any intensity");}
+		
 		
 		LinkedHashSet<String> lhs=new LinkedHashSet<>();
 		lhs.add(avgduration+"");
-		plan.put("duration for day",lhs);
 		
+		plan.put("durationPerDay",lhs);
+//		System.out.println("map size: "+plan.size());
 		return plan;
 	}
+
+//	search workouts
+	@Override
+	public List<Workout> searchWorkouts(String pattern) {
+		List<Workout> workoutlist=template.query("select * from workout_type where workout_type like ?", new Object[] {"%"+pattern+"%"}, new RowMapper<Workout>() {
+
+			@Override
+			public Workout mapRow(ResultSet rs, int rowNum) throws SQLException {
+			Workout w=new Workout();
+			w.setWorkout_type_id(rs.getInt(1));
+			w.setWorkout_type_name(rs.getString(2));
+				return w;
+			}
+		});
+		return workoutlist.isEmpty()?null:workoutlist;
+
+//		//for intensity
+//		List<Intensity> intensitylist=template.query("select * from intensity where intensity_type like ?", new Object[] {"%"+pattern+"%"}, new RowMapper<Intensity>() {
+//
+//			@Override
+//			public Intensity mapRow(ResultSet rs, int rowNum) throws SQLException {
+//				Intensity i=new Intensity();
+//				i.setIntensityid(rs.getInt(1));
+//				i.setIntensity_type(rs.getString(2));
+//				return i;
+//			}
+//		});
+//		return intensitylist.isEmpty()?null:intensitylist;
+	}
+
+	@Override
+	public List<User> searchUsers(String pattern) {
+		String p="%"+pattern+"%";
+
+		String query="select * from user where name like ? or email like ? or cast(height as char) like ? or cast(weight as char)like ?";
+		List<User> list=template.query(query, new PreparedStatementSetter() {
+			
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+			ps.setString(1,p);
+			ps.setString(2,p);
+			ps.setString(3, p);
+			ps.setString(4,p);
+			
+			}
+		}, new RowMapper() {
+
+			@Override
+			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+			User u=new User();
+			u.setName(rs.getString(2));
+			u.setEmail(rs.getString(3));
+			u.setHeight(rs.getDouble(5));
+			u.setWeight(rs.getDouble(6));
+				return u;
+			}
+		});
+		return list;
+	}
+
+	
+
+	
+
+	
 
 }

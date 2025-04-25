@@ -8,6 +8,8 @@ public interface AdminRepository {
 	public boolean validateAdmin(String username, String password);
 
 	public List<User> viewUsers();
+	
+	public List<Intensity> viewIntensities();
 
 	public boolean addWorkouts(Workout workout);
 
@@ -22,5 +24,11 @@ public interface AdminRepository {
 	public boolean delete(Integer recordid);
 
 	public Map<String,LinkedHashSet<String>> suggest(Integer userid);
+
+	public List<WorkoutCaloriesRelation> search(String pattern);
+
+	public List<Workout> searchWorkouts(String pattern);
+
+	public List<User> searchUsers(String pattern);
 
 }

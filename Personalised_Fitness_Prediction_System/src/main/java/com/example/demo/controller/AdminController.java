@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.demo.Exceptions.*;
 import com.example.demo.model.*;
 import com.example.demo.service.*;
 
@@ -25,11 +26,28 @@ public class AdminController {
 	
 //	Admin login
 	@PostMapping("/login")
-	public String adminLogin(@RequestBody Admin admin) {
-	return adminservice.validateAdmin(admin.getUsername(),admin.getPassword())?"Admin login success....":"Please check username or password";
+	public Map<String,Object> adminLogin(@RequestBody Admin admin) {
+	
+		boolean b= adminservice.validateAdmin(admin.getUsername(),admin.getPassword());
+		Map<String,Object> m=new HashMap<>();
+	if(b) {
+		m.put("msg","Admin login success....");
+		}
+	else {
+		 throw new AdminNotFoundException("Invalid username or password");
+	}
+	return m;
 	}
 	
+	
 //	Admin operations
+	
+//	view intensities
+	@GetMapping("/intensities")
+	public List<Intensity> viewIntensities(){
+		List<Intensity> list=adminservice.viewIntensities();
+		return list;
+	}
 	
 //	Workout operations by admin
 	
@@ -49,11 +67,18 @@ public class AdminController {
 	
 //	update or delete workout if some users uses it ??
 	
+	//search Workouts
+	@GetMapping("searchworkout/{pattern}")
+	public List<Workout> viewWorkouts(@PathVariable("pattern") String pattern){
+		List<Workout> list=adminservice.searchWorkouts(pattern);
+		return list;
+	}
+	
 //WorkoutCaloriesRelation related operations by admin
 	
 //	add 
 	@PostMapping("/addWorkoutCalories")
-	public String addWorkoutCalories(@RequestBody WorkoutCaloriesRelation workoutcalories) {
+	public String addWorkoutCalories(@RequestBody WorkoutCaloriesRelation workoutcalories) {		
 		boolean b=adminservice.add(workoutcalories);
 		return b?"WorkoutCaloriesRelation added success....":"WorkoutClist;aloriesRelation  not added..";
 	}
@@ -62,6 +87,7 @@ public class AdminController {
 	@GetMapping("/viewWorkoutCalories")
 	public List<WorkoutCaloriesRelation> viewWorkoutCalories(){
 		List<WorkoutCaloriesRelation> list=adminservice.view();
+//		System.out.println(list.get(0).getRecordid());
 		return list;
 	}
 	
@@ -72,13 +98,20 @@ public class AdminController {
 		return b?"WorkoutCaloriesRelation updated success...":"WorkoutCaloriesRelation not present...";
 	}
 	
-//	delete 
+	//search
+	@GetMapping("/searchWorkoutCalories/{pattern}")
+	public List<WorkoutCaloriesRelation> searchWorkoutCalories(@PathVariable("pattern") String pattern){
+		List<WorkoutCaloriesRelation> list=adminservice.search(pattern);
+		return list;
+	}
+	
+	
+//	delete not need to do 
 	@DeleteMapping("/deleteWorkoutCalories/{recordid}")
 	public String deleteWorkoutCalories(@PathVariable("recordid") Integer recordid) {
 		boolean b=adminservice.delete(recordid);
 		return b?"record deleted success...":"record not deleted...";
 	}
-	
 	
 	
 //	Admin view all users
@@ -88,7 +121,13 @@ public class AdminController {
 		List<User> list=adminservice.viewUsers();
  		return list;
 	}	
-
+	
+//	search users
+	@GetMapping("/searchuser/{pattern}")
+	public List<User> searchUser(@PathVariable("pattern") String pattern){
+		List<User> list=adminservice.searchUser(pattern);
+		return list;
+	}
 	
 //	Recommending workout plan  to individual user by admin
 	
@@ -96,9 +135,10 @@ public class AdminController {
 	@GetMapping("/suggest/{userid}")
 	public Map<String, LinkedHashSet<String>> recommendPlan(@PathVariable("userid") Integer userid) {
 		 Map<String,LinkedHashSet<String>> map=adminservice.suggest(userid);
-		if(map!=null) {return map;}
-		else {return null;}
+//		 map.forEach((e,i)->{
+//			 System.out.println(e+" "+i);
+//		 });
+		return map;
 	} 
-	
-	
+
 }

@@ -21,6 +21,11 @@ public class AdminServiceImpl implements AdminService {
 	}
 	
 	@Override
+	public List<Intensity> viewIntensities() {
+		return adminrepo.viewIntensities();
+	}
+	
+	@Override
 	public boolean addWorkouts(Workout workout) {
 		return adminrepo.addWorkouts(workout);
 	}
@@ -29,7 +34,7 @@ public class AdminServiceImpl implements AdminService {
 		return adminrepo.viewWorkouts();
 	}
 	@Override
-	public boolean add(WorkoutCaloriesRelation workoutcalories) {
+	public boolean add(WorkoutCaloriesRelation workoutcalories) {		
 		return adminrepo.add(workoutcalories);
 	}
 	@Override
@@ -47,6 +52,19 @@ public class AdminServiceImpl implements AdminService {
 	@Override
 	public Map<String, LinkedHashSet<String>> suggest(Integer userid) {
 		return adminrepo.suggest(userid);
+	}
+	@Override
+	public List<WorkoutCaloriesRelation> search(String pattern) {
+		return adminrepo.search(pattern);
+	}
+	@Override
+	public List<Workout> searchWorkouts(String pattern) {
+		return adminrepo.searchWorkouts(pattern);
+	}
+	
+	@Override
+	public List<User> searchUser(String pattern) {
+		return adminrepo.searchUsers(pattern);
 	}
 
 	

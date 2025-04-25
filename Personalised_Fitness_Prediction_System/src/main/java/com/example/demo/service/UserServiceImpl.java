@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,17 @@ public class UserServiceImpl implements UserService {
 	public boolean validate(String username, String password) {
 		return userrepo.validate(username,password);
 	}
+	
+	@Override
+	public int findUserIdByEmail(String email){
+		return userrepo.findUserIdByEmail(email);
+	}
 
+	@Override
+	public String findeNameByEmail(String email) {
+		return userrepo.findNameByEmail(email);
+	}
+	
 	@Override
 	public boolean fetch(UserWorkoutData userworkout) {
 		return userrepo.fetch(userworkout);
@@ -39,9 +49,15 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public boolean addPath(int userid, File f) {
-		// TODO Auto-generated method stub
-		return userrepo.addpath(userid,f);
+	public boolean addPath(int userid, String filename) {
+		return userrepo.addpath(userid,filename);
+	}
+	
+	@Override
+	public String getFilePath(Integer userid) {
+//		System.out.println("service file path to download: "+userrepo.getFilePath(userid));
+//		System.out.println("service: "+userrepo.getFilePath(userid));
+		return userrepo.getFilePath(userid);
 	}
 
 	@Override
