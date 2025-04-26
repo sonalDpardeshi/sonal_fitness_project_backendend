@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import com.example.demo.model.*;
 
@@ -21,4 +22,6 @@ public interface UserRepository {
 	public boolean updateUser(int id,User user);
 
 	   public User getUserByEId(String email);
+	public String viewSuggestedPlan(Integer userid)throws IOException;   
+	public String requestforplan(int userid) throws Exception;
 }

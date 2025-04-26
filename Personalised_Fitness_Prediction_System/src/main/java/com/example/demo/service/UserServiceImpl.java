@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,5 +55,17 @@ public class UserServiceImpl implements UserService {
 	public User getUserByEId(String email) {
         return userrepo.getUserByEId(email);
     }
+
+	@Override
+	public String viewSuggestedPlan(Integer userid)throws IOException {
+		// TODO Auto-generated method stub
+		return userrepo.viewSuggestedPlan(userid);
+	}
+
+	@Override
+	public String requestforplan(int userid) throws Exception {
+		// TODO Auto-generated method stub
+		return userrepo.requestforplan(userid);
+	}
 
 }

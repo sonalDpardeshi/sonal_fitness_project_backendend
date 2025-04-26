@@ -84,7 +84,8 @@ public class WorkoutCaloriesRelationRepositoryImpl implements WorkoutCaloriesRel
 
 	@Override
 	public WorkoutCaloriesRelation getworkoutcalbyrid(Integer recordid) {
-		String qry="select * from workoutcaloriesrelation where recordid=?";
+		
+		String qry="select * from WorkoutCaloriesRelation where recordid=?";
 		return template.queryForObject(qry,new BeanPropertyRowMapper<>(WorkoutCaloriesRelation.class),recordid);
 	}
 

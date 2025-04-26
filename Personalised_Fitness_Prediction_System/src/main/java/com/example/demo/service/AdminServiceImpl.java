@@ -57,5 +57,10 @@ public class AdminServiceImpl implements AdminService {
 		// TODO Auto-generated method stub
 		return adminrepo.deleteUser(userid);
 	}
+	@Override
+	public boolean updateUserStatus(Integer userid, Integer status) {
+		// TODO Auto-generated method stub
+		return adminrepo.updateUserStatus(userid,status);
+	}
 
 }
