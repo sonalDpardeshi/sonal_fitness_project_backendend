@@ -152,6 +152,9 @@ public class AdminController {
 			boolean b=adminservice.updateUserStatus(userid,status);
 			return b?"updateUserStatus updated success...":"updateUserStatus not present...";
 		}
-	 
-	
+	 @GetMapping("/getrequesteduser")
+	public List getAllRequestedUser() {
+		 List list=adminservice.getrequesteduser();
+		return list;
+	}
 }

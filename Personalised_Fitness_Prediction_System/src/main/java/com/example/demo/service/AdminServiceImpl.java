@@ -62,5 +62,10 @@ public class AdminServiceImpl implements AdminService {
 		// TODO Auto-generated method stub
 		return adminrepo.updateUserStatus(userid,status);
 	}
+	@Override
+	public List getrequesteduser() {
+		// TODO Auto-generated method stub
+		return adminrepo.getrequesteduser();
+	}
 
 }

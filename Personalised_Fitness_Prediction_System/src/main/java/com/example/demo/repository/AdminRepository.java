@@ -29,4 +29,5 @@ public interface AdminRepository {
 	public boolean delete(Integer recordid);
 	public boolean updateUserStatus(Integer userid, Integer status);
 
+	public List getrequesteduser();
 }

@@ -29,6 +29,8 @@ public interface AdminService {
 	public boolean update(WorkoutCaloriesRelation workoutcalories, Integer recordid);
 
 	public boolean delete(Integer recordid);
+	
+	public List getrequesteduser();
 	 
 
 }

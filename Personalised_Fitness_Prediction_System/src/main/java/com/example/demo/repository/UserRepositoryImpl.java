@@ -6,9 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.security.Timestamp;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -39,7 +41,7 @@ public class UserRepositoryImpl implements UserRepository{
 			ps.setString(3, user.getPassword());
 			ps.setDouble(4, user.getHeight());
 			ps.setDouble(5, user.getWeight());
-			ps.setString(6, "Approve");
+			ps.setString(6, "Pending");
 			}
 		});
 //		System.out.println("repo: "+value);
@@ -255,37 +257,54 @@ public String viewSuggestedPlan(Integer userid) throws IOException {
 
 @Override
 public String requestforplan(int userid) throws Exception {
-	String filename="C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_"+userid+".csv";
-	int count=0;
-	File f=new File(filename);
-	if(!f.exists()) {
-		return "User not Perform any workout";
-	}
-	
-	String str="";
-	StringBuilder sb=new StringBuilder();
-	try(BufferedReader br=new BufferedReader(new FileReader(f))){
-		while((str=br.readLine())!=null) {
-			 count++;
-		}
-		if(count<1) {
-			return "You are not eligible for plan";
-		}
-		else {
-			int value=template.update("INSERT INTO plan_request (userid ,status,requested_at) VALUES (?,?,?)", new PreparedStatementSetter() {
-				
-				@Override
-				public void setValues(PreparedStatement ps) throws SQLException {
-				ps.setInt(1, userid);
-				ps.setString(2, "Requested");
-				ps.setString(3,java.sql.Date. );
-				}
-			});
-		}
-	}
-	catch(Exception e) {
-		
-	}
-	return null;
+    String filename = "C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_" + userid + ".csv";
+    File f = new File(filename);
+
+    if (!f.exists()) {
+        return "You have not performed any workout. You cannot make request.";
+    }
+
+    int count = 0;
+    try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+        while (br.readLine() != null) {
+            count++;
+        }
+
+        if (count < 1) {
+            return "You are not eligible for a plan. You cannot make request.";
+        } else {
+            // Check if already requested
+            int existing = template.queryForObject(
+                "SELECT COUNT(*) FROM plan_request WHERE userid = ? AND status = 'Requested'", 
+                Integer.class, userid
+            );
+
+            if (existing > 0) {
+                return "Plan already requested.";
+            }
+
+            int value = template.update(
+                "INSERT INTO plan_request (userid, status, requested_at) VALUES (?, ?, ?)",
+                new PreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps) throws SQLException {
+                        ps.setInt(1, userid);
+                        ps.setString(2, "Requested");
+                        ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+                    }
+                }
+            );
+
+            if (value > 0) {
+                return "Plan request submitted successfully.";
+            } else {
+                return "Failed to submit request.";
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new Exception("An error occurred while requesting the plan.");
+    }
 }
+
 }

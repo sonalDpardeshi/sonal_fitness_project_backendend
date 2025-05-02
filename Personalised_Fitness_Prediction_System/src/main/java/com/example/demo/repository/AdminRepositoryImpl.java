@@ -305,6 +305,19 @@ int value=template.update("delete from WorkoutCaloriesRelation where recordid=?"
 	    return value > 0;
 	}
 
+	@Override
+	public List getrequesteduser() {
+		// TODO Auto-generated method stub
+		  String sql = "SELECT pr.rid , pr.userid, u.name, u.email, pr.status, pr.requested_at " +
+                  "FROM plan_request pr " +
+                  "JOIN user u ON pr.userid = u.userid " +
+                  "WHERE pr.status = 'Requested' " +
+                  "ORDER BY pr.requested_at DESC";
+
+     List result = template.queryForList(sql);
+     return result;
+	}
+
 	
 
 }
