@@ -14,6 +14,7 @@ import java.io.*;
 import java.util.*;
 
 import com.example.demo.model.*;
+import com.example.demo.repository.AdminRepository;
 import com.example.demo.service.*;
 
 @RestController
@@ -23,6 +24,8 @@ public class UserController {
 //	service object
 	@Autowired
 	UserService userservice;
+	@Autowired
+	AdminRepository adminRepository;
 	
 	
 //	User register
@@ -59,6 +62,8 @@ public class UserController {
 			return b?"Profile Update Successfully":"Profile not updated";
 		}
 
+		
+		//search user by email
 		  @GetMapping("/getuser/{email}")
 		    public User getUserByEmail(@PathVariable String email) {
 		        User user = userservice.getUserByEId(email);
@@ -74,6 +79,8 @@ public class UserController {
 //	user fill workout form
 	@PostMapping("/workoutdetails")
 	public String workoutDetails(@RequestBody UserWorkoutData userworkout) throws IOException {
+		adminRepository.suggest(userworkout.getUserid());
+
 		boolean b=userservice.fetch(userworkout);
 		//System.out.println("User is not getting"+b);
    if(b){
@@ -91,17 +98,17 @@ public class UserController {
 		
 	fw.write(userworkout.getUserid()+","+userworkout.getWorkout_type_id()+","+userworkout.getIntensityid()+","+userworkout.getDuration()+","+userworkout.getCalories_burn()+"\n");
 				fw.close();
-	return "workout details added to csv file..";
+	return "Workout Started Keep doing That";
 	   }
 		else {
-			return "user with this userid is not registered ";
+			return "Workout Not Found";
 		}
 	}
 
 	
 //	See history of individual user(means see/read own csv file)
 	@GetMapping("/read/{userid}")
-	public String readCsv(@RequestBody UserWorkoutData userworkout,@PathVariable Integer userid) throws IOException {
+	public String readCsv(@PathVariable Integer userid) throws IOException {
 		
 		String s=userservice.readHistory(userid);
 		
@@ -111,18 +118,30 @@ public class UserController {
 //	calculate total calories burn uptill now
 	@GetMapping("/getcaloriesuptillnow/{userid}")
 	public double getCaloriesBurnUptillNow(@PathVariable("userid") Integer userid) {
-		
 		double d= userservice.totalcount(userid);
-//		System.out.println("Controller: "+d);
 		return d;
 	}
 	
 	
-//Remaining operations of user
-//	view workouts
+//Request for suggesting a new Plan
+	@PostMapping("/requestplan/{userid}")
+	public String requestplan(@PathVariable("userid") Integer userid) throws Exception {
+		String res=userservice.requestforplan(userid);
+		return res;
+		
+	}
 	
-//	profile update and view
+// View Suggested Plan
+	@GetMapping("/getSuggestedPlan/{userid}")
+	public String getSuggestedPlan(@PathVariable Integer userid) throws IOException{
+		 File file = new File("C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\plans\\suggested_plan_user_" + userid + ".txt");
+
+		    if (file.exists()) {
+		      return userservice.viewSuggestedPlan(userid); // Or a proper message page
+		    }
+		    else return null;
+		    // Redirect to the static file pathreturn null;
+	}
 	
-//	
 
 }

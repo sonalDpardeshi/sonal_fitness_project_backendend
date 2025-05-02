@@ -1,8 +1,6 @@
-Personalized Fitness Plan for User 5
+📅 Date: 2025-04-25
+- Recommended Workout: yoga
+- Suggested Intensity Level: high
+- Suggested Duration: 45 minutes
 
-Based on your recent activity, here is your plan:
-- Recommended Workout Type ID: 21
-- Suggested Intensity Level ID: 1
-- Average Duration: 25 minutes
-
-👉 Keep up the great work! Try to be consistent with this plan for the next 2 weeks.
+💪 Keep going strong! Here's your next recommended workout.

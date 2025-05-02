@@ -9,6 +9,8 @@ import com.example.demo.model.WorkoutCaloriesRelation;
 public interface AdminService {
 
 	boolean validateAdmin(String username, String password);
+	
+	public boolean updateUserStatus(Integer userid, Integer status);
 
 	public List<User> viewUsers();
 	
@@ -27,5 +29,8 @@ public interface AdminService {
 	public boolean update(WorkoutCaloriesRelation workoutcalories, Integer recordid);
 
 	public boolean delete(Integer recordid);
+	
+	public List getrequesteduser();
+	 
 
 }

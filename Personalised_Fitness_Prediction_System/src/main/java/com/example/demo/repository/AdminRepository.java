@@ -27,5 +27,7 @@ public interface AdminRepository {
 	public boolean update(WorkoutCaloriesRelation workoutcalories, Integer recordid);
 
 	public boolean delete(Integer recordid);
+	public boolean updateUserStatus(Integer userid, Integer status);
 
+	public List getrequesteduser();
 }

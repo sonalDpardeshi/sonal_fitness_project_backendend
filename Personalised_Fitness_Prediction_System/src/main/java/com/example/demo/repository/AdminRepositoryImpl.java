@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,9 +29,12 @@ public class AdminRepositoryImpl implements AdminRepository {
 	
 	@Override
 	public boolean validateAdmin(String username, String password) {
-		return (username.equals("admin")&& password.equals("12345"))?true:false;
+		return (username.equals("admin")&& password.equals("123456"))?true:false;
 	}
 
+	//approve user or Reject
+	
+	
 	@Override
 	public List<User> viewUsers() {
 		List<User> list=new ArrayList<>();
@@ -44,6 +48,7 @@ public class AdminRepositoryImpl implements AdminRepository {
 				user.setEmail(rs.getString(3));
 				user.setHeight(rs.getDouble(5));
 				user.setWeight(rs.getDouble(6));
+				user.setStatuss(rs.getString(7));
 				return user;
 			}
 		});
@@ -53,53 +58,120 @@ public class AdminRepositoryImpl implements AdminRepository {
 
 	@Override
 	public boolean suggest(Integer userid) {
-	    // CSV file path where user's workout details are saved
 	    String csvFile = "C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_" + userid + ".csv";
-	    
-	    // Output file where the suggested plan will be saved
 	    String outputFile = "C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\plans\\suggested_plan_user_" + userid + ".txt";
 
-	    // Lists to hold data from CSV
-	    List<Integer> workoutIds = new ArrayList<>();
-	    List<Integer> intensityIds = new ArrayList<>();
-	    List<Integer> durations = new ArrayList<>();
+	    class WorkoutEntry {
+	        int workoutTypeId;
+	        int intensityId;
+	        int duration;
 
-	    File file = new File(csvFile);
-	    if (!file.exists()) {
-	        System.out.println("CSV not found for user " + userid);
-	        return false;
-	    }
-
-	    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-	        String line;
-	        while ((line = br.readLine()) != null) {
-	            String[] data = line.split(",");
-	            if (data.length >= 4) {
-	                workoutIds.add(Integer.parseInt(data[1].trim()));
-	                intensityIds.add(Integer.parseInt(data[2].trim()));
-	                durations.add(Integer.parseInt(data[3].trim()));
-	            }
+	        WorkoutEntry(int workoutTypeId, int intensityId, int duration) {
+	            this.workoutTypeId = workoutTypeId;
+	            this.intensityId = intensityId;
+	            this.duration = duration;
 	        }
-	    } catch (Exception e) {
-	        e.printStackTrace();
+
+	        double distanceTo(WorkoutEntry other) {
+	            int dWorkout = this.workoutTypeId - other.workoutTypeId;
+	            int dIntensity = this.intensityId - other.intensityId;
+	            int dDuration = this.duration - other.duration;
+	            return Math.sqrt(dWorkout * dWorkout + dIntensity * dIntensity + dDuration * dDuration);
+	        }
+	    }
+
+	    // 1. Read workout history from CSV file
+	    List<WorkoutEntry> history = new ArrayList<>();
+	    if (new File(csvFile).exists()) {
+	        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+	            String line;
+	            while ((line = br.readLine()) != null) {
+	                String[] data = line.split(",");
+	                if (data.length >= 5) {
+	                    int workoutId = Integer.parseInt(data[1].trim());
+	                    int intensityId = Integer.parseInt(data[2].trim());
+	                    int duration = Integer.parseInt(data[3].trim());
+	                    history.add(new WorkoutEntry(workoutId, intensityId, duration));
+	                }
+	            }
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	            return false; // Early return on file error
+	        }
+	    }
+
+	    if (history.size() < 1) {
+	        System.out.println("Not enough workout history.");
 	        return false;
 	    }
 
-	    // 🧠 Basic Suggestion Logic (example)
-	    int avgDuration = durations.stream().mapToInt(Integer::intValue).sum() / durations.size();
-	    int mostCommonWorkout = workoutIds.get(0); // Replace with real logic
-	    int mostCommonIntensity = intensityIds.get(0); // Replace with real logic
+	    // 2. Get the latest workout
+	    WorkoutEntry latest = history.get(history.size() - 1);
 
-	    // 💡 Create a suggestion message
+	    // 3. Fetch all workouts from the database
+	    String workoutQuery = "SELECT workout_type_id, intensityid, duration FROM workoutcaloriesrelation";
+	    
+	    List<WorkoutEntry> allWorkouts = template.query(workoutQuery,new RowMapper() {
+
+			@Override
+			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+				// TODO Auto-generated method stub
+				return new WorkoutEntry(rs.getInt("workout_type_id"),rs.getInt("intensityid"),rs.getInt("duration"));
+			}
+	    	
+		});
+//	    List<WorkoutEntry> allWorkouts = template.query(
+//	            workoutQuery,
+//	            (rs, rowNum) -> new WorkoutEntry(
+//	                    rs.getInt("workout_type_id"),
+//	                    rs.getInt("intensityid"),
+//	                    rs.getInt("duration"))
+//	    );
+
+	    if (allWorkouts.isEmpty()) {
+	        System.out.println("No workouts available for suggestion.");
+	        return false;
+	    }
+
+	    // 4. Calculate distance between latest workout and all available workouts
+	    Map<WorkoutEntry, Double> distanceMap = new HashMap<>();
+	    for (WorkoutEntry option : allWorkouts) {
+	        distanceMap.put(option, latest.distanceTo(option));
+	    }
+
+	    // 5. Get top 1 closest workout option (or more if needed)
+	    WorkoutEntry bestMatch = distanceMap.entrySet().stream()
+	            .sorted(Map.Entry.comparingByValue())
+	            .map(Map.Entry::getKey)
+	            .findFirst()
+	            .orElse(null);
+
+	    if (bestMatch == null) {
+	        System.out.println("No suitable workout found.");
+	        return false;
+	    }
+
+	    // 6. Get names from DB
+	    String workoutName = template.queryForObject(
+	            "SELECT workout_type_name FROM workout_type WHERE workout_type_id = ?",
+	            new Object[]{bestMatch.workoutTypeId},
+	            String.class
+	    );
+
+	    String intensityName = template.queryForObject(
+	            "SELECT intensity_type FROM intensity WHERE intensityid = ?",
+	            new Object[]{bestMatch.intensityId},
+	            String.class
+	    );
+
+	    // 7. Write to suggestion file
 	    StringBuilder suggestion = new StringBuilder();
-	    suggestion.append("Personalized Fitness Plan for User ").append(userid).append("\n\n");
-	    suggestion.append("Based on your recent activity, here is your plan:\n");
-	    suggestion.append("- Recommended Workout Type ID: ").append(mostCommonWorkout).append("\n");
-	    suggestion.append("- Suggested Intensity Level ID: ").append(mostCommonIntensity).append("\n");
-	    suggestion.append("- Average Duration: ").append(avgDuration).append(" minutes\n\n");
-	    suggestion.append("👉 Keep up the great work! Try to be consistent with this plan for the next 2 weeks.");
+	    suggestion.append("📅 Date: ").append(java.time.LocalDate.now()).append("\n");
+	    suggestion.append("- Recommended Workout: ").append(workoutName).append("\n");
+	    suggestion.append("- Suggested Intensity Level: ").append(intensityName).append("\n");
+	    suggestion.append("- Suggested Duration: ").append(bestMatch.duration).append(" minutes\n\n");
+	    suggestion.append("💪 Keep going strong! Here's your next recommended workout.");
 
-	    // 📝 Save the suggestion to a file
 	    try (BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
 	        bw.write(suggestion.toString());
 	    } catch (IOException e) {
@@ -107,7 +179,6 @@ public class AdminRepositoryImpl implements AdminRepository {
 	        return false;
 	    }
 
-	    System.out.println("Plan suggested and saved for user " + userid);
 	    return true;
 	}
 
@@ -214,7 +285,39 @@ int value=template.update("delete from WorkoutCaloriesRelation where recordid=?"
 		});
 		return value>0?true:false;
 	}
-	
+
+	@Override
+	public boolean updateUserStatus(Integer userid, Integer status) {
+	    String statusStr;
+	    if (status == 1) {
+	        statusStr = "Approve";
+	    } else if (status == -1) {
+	        statusStr = "Reject";
+	    } else {
+	        statusStr = "Pending";
+	    }
+
+	    int value = template.update("UPDATE user SET Status=? WHERE userid=?", ps -> {
+	        ps.setString(1, statusStr);
+	        ps.setInt(2, userid);
+	    });
+
+	    return value > 0;
+	}
+
+	@Override
+	public List getrequesteduser() {
+		// TODO Auto-generated method stub
+		  String sql = "SELECT pr.rid , pr.userid, u.name, u.email, pr.status, pr.requested_at " +
+                  "FROM plan_request pr " +
+                  "JOIN user u ON pr.userid = u.userid " +
+                  "WHERE pr.status = 'Requested' " +
+                  "ORDER BY pr.requested_at DESC";
+
+     List result = template.queryForList(sql);
+     return result;
+	}
+
 	
 
 }

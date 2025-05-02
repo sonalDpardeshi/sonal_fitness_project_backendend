@@ -2,10 +2,15 @@ package com.example.demo.repository;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.security.Timestamp;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -27,7 +32,7 @@ public class UserRepositoryImpl implements UserRepository{
 	@Override
 	public boolean add(User user) {
 //		System.out.println("Repo: "+user.getHeight());
-		int value=template.update("insert into user values('0',?,?,?,?,?)", new PreparedStatementSetter() {
+		int value=template.update("INSERT INTO user (name ,email,password,height,weight,status) VALUES (?,?,?,?,?,?)", new PreparedStatementSetter() {
 			
 			@Override
 			public void setValues(PreparedStatement ps) throws SQLException {
@@ -36,6 +41,7 @@ public class UserRepositoryImpl implements UserRepository{
 			ps.setString(3, user.getPassword());
 			ps.setDouble(4, user.getHeight());
 			ps.setDouble(5, user.getWeight());
+			ps.setString(6, "Pending");
 			}
 		});
 //		System.out.println("repo: "+value);
@@ -51,6 +57,7 @@ public class UserRepositoryImpl implements UserRepository{
 			public void setValues(PreparedStatement ps) throws SQLException {
 				ps.setString(1, username);
 				ps.setString(2, password);
+				ps.setString(3,"Approve");
 			}
 		};
 		
@@ -60,8 +67,8 @@ public class UserRepositoryImpl implements UserRepository{
 				return null;
 			}
 		};
-		int value=template.query("select * from user where email=? and password=?", pstmt, row).size();
-//		System.out.println("value: "+value);
+		int value=template.query("select * from user where email=? and password=? and status=?", pstmt, row).size();
+
 		return value>0?true:false;
 	}
 
@@ -129,10 +136,10 @@ public class UserRepositoryImpl implements UserRepository{
 			uwdata.setIntensityid(rs.getInt(3));
 			uwdata.setDuration(duration);
 			
-			//System.out.println(uwdata.getUserid()+"\t"+uwdata.getWorkout_type_id()+"\t"+uwdata.getIntensityid()+"\t"+uwdata.getDuration());
+			
 			int d=rs.getInt(4);
 			double cal=rs.getDouble(5);
-			//System.out.println(d+"\t"+cal);
+			
 			
 //			predicting calories logic
 			uwdata.setCalories_burn((duration*cal)/d);
@@ -143,7 +150,7 @@ public class UserRepositoryImpl implements UserRepository{
 		list.forEach(e->
 		userworkout.setCalories_burn(e.getCalories_burn()));
 		
-		//System.out.println(list.get(0).getCalories_burn());
+		
 				return list.size()>0?true:false;
 	}
 
@@ -171,32 +178,30 @@ public class UserRepositoryImpl implements UserRepository{
 		return sb.toString();
 	}
 
+	// Calories Burned=Duration (minutes)×MET×3.5×weight (kg)/200
 	@Override
 	public double totalCount(int userid) {
     String filename="C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_"+userid+".csv";
-		
-		File f=new File(filename);
-		if(!f.exists()) {
-			return 0;
-		}
-		
-		String str="";
-		StringBuilder sb=new StringBuilder();
-		double total=0;
-		try(BufferedReader br=new BufferedReader(new FileReader(f))){
-			while((str=br.readLine())!=null) {
-//				count total calories remaining
-				String s[]=str.split(",");
-				total+=Double.parseDouble(s[s.length-1]);//Converting string into double
-//				System.out.print("repo: "+s[s.length-1]);
-				 sb.append(str).append("\n");
-			}
-		}
-		catch(Exception e) {
-			
-		}
-		System.out.println(total);
-		return total;
+	String str="";	
+    File f=new File(filename);
+    double total=0;
+    if(f.exists())
+    {
+    	try(BufferedReader br=new BufferedReader(new FileReader(f))){
+    		while((str=br.readLine())!=null)
+    		{
+    			String s[]=str.split(",");
+    			total+=Double.parseDouble(s[s.length-1]);
+    		}
+    	}
+    	catch(Exception e)
+    	{
+    	e.printStackTrace();
+    	}
+    	//System.out.println("Total Calories Burn ... "+total);
+    }
+     return total;
+    
 	}
 
 //	adding csv file name in db
@@ -231,5 +236,75 @@ public User getUserByEId(String email) {
 	return template.queryForObject(qry,new BeanPropertyRowMapper<>(User.class),email);
 }
 
-   
+@Override
+public String viewSuggestedPlan(Integer userid) throws IOException {
+    String filename = "C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\plans\\suggested_plan_user_" + userid + ".txt";
+    File file = new File(filename);
+    StringBuilder content = new StringBuilder();
+
+    if (file.exists()) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        }
+        return content.toString();
+    } else {
+        return "Suggested plan not found for user ID: " + userid;
+    }
+}
+
+@Override
+public String requestforplan(int userid) throws Exception {
+    String filename = "C:\\Fitness_Prediction\\BackEnd\\Fitness_Backend\\New_Fitness_Backend\\sonal_fitness_project_backendend\\Personalised_Fitness_Prediction_System\\src\\main\\resources\\static\\csvfile\\user_" + userid + ".csv";
+    File f = new File(filename);
+
+    if (!f.exists()) {
+        return "You have not performed any workout. You cannot make request.";
+    }
+
+    int count = 0;
+    try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+        while (br.readLine() != null) {
+            count++;
+        }
+
+        if (count < 1) {
+            return "You are not eligible for a plan. You cannot make request.";
+        } else {
+            // Check if already requested
+            int existing = template.queryForObject(
+                "SELECT COUNT(*) FROM plan_request WHERE userid = ? AND status = 'Requested'", 
+                Integer.class, userid
+            );
+
+            if (existing > 0) {
+                return "Plan already requested.";
+            }
+
+            int value = template.update(
+                "INSERT INTO plan_request (userid, status, requested_at) VALUES (?, ?, ?)",
+                new PreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps) throws SQLException {
+                        ps.setInt(1, userid);
+                        ps.setString(2, "Requested");
+                        ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+                    }
+                }
+            );
+
+            if (value > 0) {
+                return "Plan request submitted successfully.";
+            } else {
+                return "Failed to submit request.";
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new Exception("An error occurred while requesting the plan.");
+    }
+}
+
 }
